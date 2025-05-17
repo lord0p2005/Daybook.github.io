@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark"> {/* Added dark class for default dark theme */}
+    <html lang="en" className="dark">{/* Added dark class for default dark theme */}
       <body className={`${lora.variable} antialiased font-lora`}> {/* Applied Lora font variable and class */}
         {children}
         <Toaster /> {/* Added Toaster for notifications */}

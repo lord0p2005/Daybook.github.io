@@ -8,6 +8,7 @@ import {
   BookOpenText,
   ListChecks,
   Sparkle,
+  Brain, // Added Brain icon for Philosophy
   Icon as LucideIcon, // Default icon
 } from 'lucide-react';
 
@@ -23,6 +24,7 @@ const iconMap: Record<string, React.ElementType<LucideProps>> = {
   Travel: Globe,
   Learning: BookOpenText,
   Errands: ListChecks,
+  Philosophy: Brain, // Added Philosophy to iconMap
   Other: Sparkle,
 };
 

@@ -20,7 +20,7 @@ const CategorizeLogEntryOutputSchema = z.object({
   category: z
     .string()
     .describe(
-      'The main category of the log entry. Possible categories include: Work, Personal, Health, Social, Travel, Learning, Errands, Other.'
+      'The main category of the log entry. Possible categories include: Work, Personal, Health, Social, Travel, Learning, Errands, Philosophy, Other.'
     ),
   subcategory: z
     .string()
@@ -48,7 +48,7 @@ const prompt = ai.definePrompt({
 
   Log Entry: {{{logEntry}}}
 
-  Ensure that the main category is one of the following: Work, Personal, Health, Social, Travel, Learning, Errands, Other.
+  Ensure that the main category is one of the following: Work, Personal, Health, Social, Travel, Learning, Errands, Philosophy, Other.
   If the main category is "Learning", please identify a specific sub-category (e.g., Math, Biology, History, Programming, Language, Music Theory).
   For other main categories, a sub-category can be provided if it offers useful, concise detail, but it's optional.
   `,

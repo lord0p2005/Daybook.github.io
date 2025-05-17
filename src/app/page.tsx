@@ -9,7 +9,7 @@ import { LogDisplay } from '@/components/LogDisplay';
 import { AIPromptDisplay } from '@/components/AIPromptDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Added Card components
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { NotebookText } from 'lucide-react';
 
@@ -26,7 +26,7 @@ const groupLogsByCategory = (logs: LogEntry[]): Record<string, LogEntry[]> => {
 };
 
 // Define a preferred order for categories
-const CATEGORY_ORDER: string[] = ['Learning', 'Work', 'Personal', 'Health', 'Social', 'Travel', 'Errands', 'Other', 'Uncategorized'];
+const CATEGORY_ORDER: string[] = ['Learning', 'Work', 'Personal', 'Health', 'Social', 'Travel', 'Errands', 'Philosophy', 'Other', 'Uncategorized'];
 
 
 export default function DaybookPage() {

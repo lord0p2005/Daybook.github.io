@@ -9,6 +9,7 @@ import { aiPromptDailyLog } from '@/ai/flows/ai-prompt-daily-log';
 // A real application would use a database.
 let logs: LogEntry[] = [];
 let goals: Goal[] = [];
+let customCategoryNames: Map<string, string> = new Map();
 
 
 // --- Log Entry Functions ---
@@ -136,5 +137,19 @@ export async function updateGoal(id: string, updates: Partial<Pick<Goal, 'text' 
 
 export async function deleteGoal(id: string): Promise<void> {
   goals = goals.filter(g => g.id !== id);
+  return Promise.resolve();
+}
+
+// --- Custom Category Name Functions ---
+export async function getCustomCategoryNamesMap(): Promise<Map<string, string>> {
+  return Promise.resolve(new Map(customCategoryNames));
+}
+
+export async function setCustomCategoryName(categoryKey: string, customName: string): Promise<void> {
+  if (customName.trim() === '') {
+    customCategoryNames.delete(categoryKey);
+  } else {
+    customCategoryNames.set(categoryKey, customName.trim());
+  }
   return Promise.resolve();
 }

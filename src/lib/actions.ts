@@ -8,6 +8,7 @@ import { aiPromptDailyLog } from '@/ai/flows/ai-prompt-daily-log';
 // In-memory store for demonstration purposes.
 // A real application would use a database.
 let logs: LogEntry[] = [];
+let nextLogId = 1;
 
 export async function addLogEntry(text: string): Promise<LogEntry> {
   try {
@@ -26,9 +27,35 @@ export async function addLogEntry(text: string): Promise<LogEntry> {
     return newLogEntry;
   } catch (error) {
     console.error("Error adding log entry:", error);
-    // For simplicity, rethrow or return a specific error structure
-    // In a real app, you might want to return a more user-friendly error
     throw new Error("Failed to add and categorize log entry.");
+  }
+}
+
+export async function updateLogEntry(id: string, newText: string): Promise<LogEntry | null> {
+  const logIndex = logs.findIndex(log => log.id === id);
+  if (logIndex === -1) {
+    console.error("Log not found for ID:", id);
+    return null; // Or throw an error
+  }
+
+  try {
+    const { category, subcategory, confidence } = await categorizeLogEntry({ logEntry: newText });
+    
+    const updatedLogEntry: LogEntry = {
+      ...logs[logIndex],
+      text: newText,
+      category,
+      subcategory,
+      confidence,
+      // Optionally update timestamp to reflect edit time, or add a new 'lastEdited' field
+      // For now, keeping original timestamp for simplicity of the LogEntry type
+    };
+
+    logs[logIndex] = updatedLogEntry;
+    return updatedLogEntry;
+  } catch (error) {
+    console.error("Error updating log entry:", error);
+    throw new Error("Failed to update and categorize log entry.");
   }
 }
 
@@ -41,8 +68,6 @@ export async function getAIPrompts(existingLogs?: LogEntry[]): Promise<string[]>
   try {
     let previousLogsText = '';
     if (existingLogs && existingLogs.length > 0) {
-      // Use the last 3-5 logs as context, or a summary.
-      // For simplicity, concatenating text of last 3 logs.
       previousLogsText = existingLogs.slice(0, 3).map(log => {
         let logContext = log.text;
         if (log.category) logContext = `[${log.category}${log.subcategory ? ` - ${log.subcategory}` : ''}] ${logContext}`;

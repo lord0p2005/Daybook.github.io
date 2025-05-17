@@ -3,20 +3,31 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { LogEntry } from '@/lib/types';
-import { addLogEntry, getLogs, getAIPrompts } from '@/lib/actions';
+import { addLogEntry, getLogs, getAIPrompts, updateLogEntry } from '@/lib/actions';
 import { LogEntryForm } from '@/components/LogEntryForm';
 import { LogDisplay } from '@/components/LogDisplay';
 import { AIPromptDisplay } from '@/components/AIPromptDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { NotebookText } from 'lucide-react';
+import { NotebookText, Pencil } from 'lucide-react';
 
 // Helper function to group logs by category
 const groupLogsByCategory = (logs: LogEntry[]): Record<string, LogEntry[]> => {
   return logs.reduce((acc, log) => {
-    const category = log.category || 'Uncategorized'; // Group logs without a category
+    const category = log.category || 'Uncategorized';
     if (!acc[category]) {
       acc[category] = [];
     }
@@ -25,9 +36,7 @@ const groupLogsByCategory = (logs: LogEntry[]): Record<string, LogEntry[]> => {
   }, {} as Record<string, LogEntry[]>);
 };
 
-// Define a preferred order for categories
 const CATEGORY_ORDER: string[] = ['Learning', 'Work', 'Personal', 'Health', 'Social', 'Travel', 'Errands', 'Philosophy', 'Other', 'Uncategorized'];
-
 
 export default function DaybookPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -35,6 +44,13 @@ export default function DaybookPage() {
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [isSubmittingLog, setIsSubmittingLog] = useState(false);
+  
+  // State for editing logs
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentEditingLog, setCurrentEditingLog] = useState<LogEntry | null>(null);
+  const [editText, setEditText] = useState('');
+  const [isUpdatingLog, setIsUpdatingLog] = useState(false);
+
   const { toast } = useToast();
 
   const fetchInitialData = useCallback(async () => {
@@ -67,7 +83,7 @@ export default function DaybookPage() {
   const handleRefreshPrompts = useCallback(async () => {
     setIsLoadingPrompts(true);
     try {
-      const fetchedPrompts = await getAIPrompts(logs);
+      const fetchedPrompts = await getAIPrompts(logs); // Pass current logs for context
       setAiPrompts(fetchedPrompts);
     } catch (error) {
       console.error("Error refreshing prompts:", error);
@@ -90,7 +106,7 @@ export default function DaybookPage() {
         title: "Log Saved",
         description: `Your entry "${text.substring(0,20)}..." has been saved.`,
       });
-      handleRefreshPrompts();
+      await handleRefreshPrompts(); // Refresh prompts after adding a new log
     } catch (error) {
       console.error("Error submitting log:", error);
       toast({
@@ -100,6 +116,53 @@ export default function DaybookPage() {
       });
     } finally {
       setIsSubmittingLog(false);
+    }
+  };
+
+  const handleOpenEditDialog = (log: LogEntry) => {
+    setCurrentEditingLog(log);
+    setEditText(log.text);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setCurrentEditingLog(null);
+    setEditText('');
+  };
+
+  const handleSaveChanges = async () => {
+    if (!currentEditingLog || editText.trim() === '') {
+      toast({
+        title: "Error",
+        description: "Log entry text cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsUpdatingLog(true);
+    try {
+      const updatedLog = await updateLogEntry(currentEditingLog.id, editText);
+      if (updatedLog) {
+        setLogs(prevLogs => prevLogs.map(log => log.id === updatedLog.id ? updatedLog : log));
+        toast({
+          title: "Log Updated",
+          description: "Your entry has been successfully updated.",
+        });
+        await handleRefreshPrompts(); // Refresh prompts after editing a log
+      } else {
+        throw new Error("Update returned null");
+      }
+      handleCloseEditDialog();
+    } catch (error) {
+      console.error("Error updating log:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update your log entry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingLog(false);
     }
   };
 
@@ -138,19 +201,21 @@ export default function DaybookPage() {
                   <CardTitle className="text-xl">{category.charAt(0).toUpperCase() + category.slice(1)}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <LogDisplay logs={groupedLogs[category]} />
+                  <LogDisplay logs={groupedLogs[category]} onStartEdit={handleOpenEditDialog} />
                 </CardContent>
               </Card>
             ))
           ) : (
-            <Card className="shadow-lg bg-card text-card-foreground">
-              <CardContent className="pt-6">
-                <div className="text-center text-muted-foreground py-8">
-                  <p className="text-lg">Your daybook is empty.</p>
-                  <p>Start by writing down what you did today!</p>
-                </div>
-              </CardContent>
-            </Card>
+            !isSubmittingLog && ( // Only show if not in the process of submitting the very first log
+              <Card className="shadow-lg bg-card text-card-foreground">
+                <CardContent className="pt-6">
+                  <div className="text-center text-muted-foreground py-8">
+                    <p className="text-lg">Your daybook is empty.</p>
+                    <p>Start by writing down what you did today!</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )
           )}
         </div>
       </main>
@@ -160,6 +225,43 @@ export default function DaybookPage() {
           <LogEntryForm onSubmit={handleNewLogSubmit} isSubmitting={isSubmittingLog} />
         </div>
       </footer>
+
+      {/* Edit Log Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Pencil className="mr-2 h-5 w-5" /> Edit Log Entry
+            </DialogTitle>
+            <DialogDescription>
+              Make changes to your log entry below. The entry will be re-categorized upon saving.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              placeholder="Edit your log entry..."
+              className="min-h-[100px] bg-input text-foreground placeholder:text-muted-foreground"
+              rows={5}
+              disabled={isUpdatingLog}
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline" disabled={isUpdatingLog}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="button" onClick={handleSaveChanges} disabled={isUpdatingLog || editText.trim() === ''}>
+              {isUpdatingLog ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-2" />
+              ) : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

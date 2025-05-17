@@ -7,3 +7,12 @@ export interface LogEntry {
   subcategory?: string; // Added for more specific categorization
   confidence?: number;
 }
+
+export interface Goal {
+  id: string;
+  text: string;
+  createdAt: string; // ISO string
+  targetDate?: string; // Optional ISO string for target completion date
+  status: 'active' | 'completed' | 'archived';
+  updatedAt: string; // ISO string, to track last modification
+}

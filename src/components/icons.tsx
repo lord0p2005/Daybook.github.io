@@ -1,3 +1,4 @@
+
 import type { LucideProps } from 'lucide-react';
 import {
   Briefcase,
@@ -8,9 +9,16 @@ import {
   BookOpenText,
   ListChecks,
   Sparkle,
-  Brain, // Added Brain icon for Philosophy
-  Icon as LucideIcon, // Default icon
+  Brain, 
+  Flag, // For Goals section
+  Target, // Alternative for Goals or specific goal items
+  CircleDot, // For active goals
+  CheckCircle2, // For completed goals
+  Archive, // For archived goals
+  ArchiveRestore, // To restore goals
+  Icon as LucideIcon, 
 } from 'lucide-react';
+import { cn } from '@/lib/utils'; // Ensure cn is imported
 
 interface CategoryIconProps extends LucideProps {
   category?: string;
@@ -24,16 +32,33 @@ const iconMap: Record<string, React.ElementType<LucideProps>> = {
   Travel: Globe,
   Learning: BookOpenText,
   Errands: ListChecks,
-  Philosophy: Brain, // Added Philosophy to iconMap
+  Philosophy: Brain, 
   Other: Sparkle,
 };
 
 export function CategoryIcon({ category, className, ...props }: CategoryIconProps) {
-  const IconComponent = category && iconMap[category] ? iconMap[category] : Sparkle; // Default to Sparkle if no category or not found
+  const IconComponent = category && iconMap[category] ? iconMap[category] : Sparkle; 
   return <IconComponent className={cn("h-5 w-5", className)} {...props} />;
 }
 
-// Helper function for cn if not already available globally in this component context
-// (usually it is via "@/lib/utils")
-// If you have cn in utils, you can remove this.
-const cn = (...inputs: any[]) => inputs.filter(Boolean).join(' ');
+// General purpose GoalIcon
+export function GoalStatusIcon({ status, className, ...props }: { status?: Goal['status'] } & LucideProps) {
+  let IconComponent;
+  switch (status) {
+    case 'active':
+      IconComponent = CircleDot;
+      break;
+    case 'completed':
+      IconComponent = CheckCircle2;
+      break;
+    case 'archived':
+      IconComponent = Archive;
+      break;
+    default:
+      IconComponent = Flag; 
+  }
+  return <IconComponent className={cn("h-5 w-5", className)} {...props} />;
+}
+
+// Exporting other useful icons for goals if needed directly
+export { Flag as GoalSectionIcon, Target as TargetIcon, CircleDot as ActiveGoalIcon, CheckCircle2 as CompletedGoalIcon, Archive as ArchiveIcon, ArchiveRestore as RestoreGoalIcon };

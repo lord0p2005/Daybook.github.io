@@ -20,7 +20,13 @@ const CategorizeLogEntryOutputSchema = z.object({
   category: z
     .string()
     .describe(
-      'The category of the log entry. Possible categories include: Work, Personal, Health, Social, Travel, Learning, Errands, Other.'
+      'The main category of the log entry. Possible categories include: Work, Personal, Health, Social, Travel, Learning, Errands, Other.'
+    ),
+  subcategory: z
+    .string()
+    .optional()
+    .describe(
+      'A more specific sub-category. For "Learning", this could be "Math", "Biology", "History", "Programming", etc. For other categories, this can be omitted or provide finer detail if obvious and concise.'
     ),
   confidence: z
     .number()
@@ -38,11 +44,13 @@ const prompt = ai.definePrompt({
   output: {schema: CategorizeLogEntryOutputSchema},
   prompt: `You are an AI assistant that categorizes daily log entries.
 
-  Given the following log entry, determine the most appropriate category and a confidence score between 0 and 1.
+  Given the following log entry, determine the most appropriate main category, a potential sub-category, and a confidence score between 0 and 1 for the main category.
 
   Log Entry: {{{logEntry}}}
 
-  Ensure that the category is one of the following: Work, Personal, Health, Social, Travel, Learning, Errands, Other.
+  Ensure that the main category is one of the following: Work, Personal, Health, Social, Travel, Learning, Errands, Other.
+  If the main category is "Learning", please identify a specific sub-category (e.g., Math, Biology, History, Programming, Language, Music Theory).
+  For other main categories, a sub-category can be provided if it offers useful, concise detail, but it's optional.
   `,
 });
 

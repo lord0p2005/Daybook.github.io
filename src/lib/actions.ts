@@ -11,13 +11,14 @@ let logs: LogEntry[] = [];
 
 export async function addLogEntry(text: string): Promise<LogEntry> {
   try {
-    const { category, confidence } = await categorizeLogEntry({ logEntry: text });
+    const { category, subcategory, confidence } = await categorizeLogEntry({ logEntry: text });
     
     const newLogEntry: LogEntry = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
       text,
       category,
+      subcategory, // Include subcategory
       confidence,
     };
 
@@ -42,7 +43,11 @@ export async function getAIPrompts(existingLogs?: LogEntry[]): Promise<string[]>
     if (existingLogs && existingLogs.length > 0) {
       // Use the last 3-5 logs as context, or a summary.
       // For simplicity, concatenating text of last 3 logs.
-      previousLogsText = existingLogs.slice(0, 3).map(log => log.text).join('\n---\n');
+      previousLogsText = existingLogs.slice(0, 3).map(log => {
+        let logContext = log.text;
+        if (log.category) logContext = `[${log.category}${log.subcategory ? ` - ${log.subcategory}` : ''}] ${logContext}`;
+        return logContext;
+      }).join('\n---\n');
     }
     
     const { promptQuestions } = await aiPromptDailyLog({ previousLogs: previousLogsText });

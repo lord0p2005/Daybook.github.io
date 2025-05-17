@@ -29,13 +29,14 @@ export function LogDisplay({ logs }: LogDisplayProps) {
                 <CategoryIcon category={log.category} className="text-primary" />
                 <CardTitle className="text-lg font-semibold">
                   {log.category || 'Log Entry'}
+                  {log.subcategory && <span className="text-base font-normal text-muted-foreground"> ({log.subcategory})</span>}
                 </CardTitle>
               </div>
               <p className="text-xs text-muted-foreground pt-1">
                 {formatDistanceToNow(parseISO(log.timestamp), { addSuffix: true })}
               </p>
             </div>
-            {log.category && (
+            {log.category && ( // This description shows confidence, could also show subcategory if not in title
               <CardDescription className="text-xs">
                 Confidence: {log.confidence ? (log.confidence * 100).toFixed(0) + '%' : 'N/A'}
               </CardDescription>

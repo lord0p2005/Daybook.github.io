@@ -9,8 +9,25 @@ import { LogDisplay } from '@/components/LogDisplay';
 import { AIPromptDisplay } from '@/components/AIPromptDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Added Card components
 import { useToast } from '@/hooks/use-toast';
 import { NotebookText } from 'lucide-react';
+
+// Helper function to group logs by category
+const groupLogsByCategory = (logs: LogEntry[]): Record<string, LogEntry[]> => {
+  return logs.reduce((acc, log) => {
+    const category = log.category || 'Uncategorized'; // Group logs without a category
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(log);
+    return acc;
+  }, {} as Record<string, LogEntry[]>);
+};
+
+// Define a preferred order for categories
+const CATEGORY_ORDER: string[] = ['Learning', 'Work', 'Personal', 'Health', 'Social', 'Travel', 'Errands', 'Other', 'Uncategorized'];
+
 
 export default function DaybookPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -26,7 +43,7 @@ export default function DaybookPage() {
     try {
       const [fetchedLogs, fetchedPrompts] = await Promise.all([
         getLogs(),
-        getAIPrompts() // Initial prompts without context or with minimal context
+        getAIPrompts()
       ]);
       setLogs(fetchedLogs);
       setAiPrompts(fetchedPrompts);
@@ -50,7 +67,7 @@ export default function DaybookPage() {
   const handleRefreshPrompts = useCallback(async () => {
     setIsLoadingPrompts(true);
     try {
-      const fetchedPrompts = await getAIPrompts(logs); // Pass current logs for context
+      const fetchedPrompts = await getAIPrompts(logs);
       setAiPrompts(fetchedPrompts);
     } catch (error) {
       console.error("Error refreshing prompts:", error);
@@ -73,7 +90,6 @@ export default function DaybookPage() {
         title: "Log Saved",
         description: `Your entry "${text.substring(0,20)}..." has been saved.`,
       });
-      // Refresh prompts after a new log is added
       handleRefreshPrompts();
     } catch (error) {
       console.error("Error submitting log:", error);
@@ -86,6 +102,9 @@ export default function DaybookPage() {
       setIsSubmittingLog(false);
     }
   };
+
+  const groupedLogs = groupLogsByCategory(logs);
+  const displayCategories = CATEGORY_ORDER.filter(cat => groupedLogs[cat] && groupedLogs[cat].length > 0);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -108,12 +127,30 @@ export default function DaybookPage() {
         <div className="flex-grow space-y-4">
           {isLoadingLogs ? (
             <>
-              <Skeleton className="h-24 w-full rounded-lg" />
-              <Skeleton className="h-24 w-full rounded-lg" />
-              <Skeleton className="h-24 w-full rounded-lg" />
+              <Skeleton className="h-32 w-full rounded-lg mb-6" />
+              <Skeleton className="h-32 w-full rounded-lg mb-6" />
+              <Skeleton className="h-32 w-full rounded-lg" />
             </>
+          ) : displayCategories.length > 0 ? (
+            displayCategories.map((category) => (
+              <Card key={category} className="shadow-lg bg-card text-card-foreground">
+                <CardHeader>
+                  <CardTitle className="text-xl">{category.charAt(0).toUpperCase() + category.slice(1)}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <LogDisplay logs={groupedLogs[category]} />
+                </CardContent>
+              </Card>
+            ))
           ) : (
-            <LogDisplay logs={logs} />
+            <Card className="shadow-lg bg-card text-card-foreground">
+              <CardContent className="pt-6">
+                <div className="text-center text-muted-foreground py-8">
+                  <p className="text-lg">Your daybook is empty.</p>
+                  <p>Start by writing down what you did today!</p>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </main>

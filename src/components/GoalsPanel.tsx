@@ -5,7 +5,7 @@ import type { Goal } from '@/lib/types';
 import { GoalItem } from '@/components/GoalItem';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Flag, CheckCircle2, Archive } from 'lucide-react';
+import { Flag, CheckCircle2, Archive, CircleDot } from 'lucide-react'; // Added CircleDot
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface GoalsPanelProps {
@@ -90,3 +90,4 @@ export function GoalsPanel({
     </Card>
   );
 }
+
